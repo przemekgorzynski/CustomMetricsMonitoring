@@ -1,4 +1,4 @@
-# CustomPrometheusMetrics
+# CustomMetricsMonitoring
 
 Before running update ping targets (PING_TARGETS arg) in `docker-compose.yml` file.
 
