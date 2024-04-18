@@ -1,0 +1,2 @@
+prometheus_client==0.20.0
+ping3==4.0.8
