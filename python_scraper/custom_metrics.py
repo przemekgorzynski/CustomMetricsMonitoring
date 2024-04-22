@@ -11,8 +11,8 @@ logging.basicConfig(
 
 # Define Prometheus gauge metric
 PING_VALUE = Gauge('ping_rsponse_time', 'Time of ping', ['target'])
-DISK_TOTAL = Gauge('node_total_disk_space', 'Ammount of disk space', ['device'])
-DISK_USAGE = Gauge('node_disk_usage', 'Ammount of disk usage', ['device'])
+DISK_TOTAL = Gauge('node_disk_total_space', 'Ammount of disk space', ['device'])
+DISK_USAGE = Gauge('node_disk_usage_space', 'Ammount of disk usage', ['device'])
 
 # Ping Targets
 hosts = (os.environ['PING_TARGETS']).split(',')
@@ -22,38 +22,45 @@ def ping_function(target:str) -> float:
   return ping_time
 
 # Disk metrics
-def get_drives() -> list:
-  drives = []
-  for partition in psutil.disk_partitions(all=False):
-    drives.append(partition.device)
-  return drives
+types_monitor = (os.environ['DISK_TYPES_TO_MONITOR']).split(',')
+def get_disk_info():
+    disk_info = {}
+    partitions = psutil.disk_partitions(all=False)
+    for partition in partitions:
+        for ptype in types_monitor:
+          if ptype in partition.device:
+            usage = psutil.disk_usage(partition.mountpoint)
+            disk_info[partition.device] = {
+                "mountpoint": partition.mountpoint,
+                "total": usage.total,
+                "used": usage.used,
+                "free": usage.free,
+                "percent": usage.percent
+            }
+    return disk_info
 
 if __name__ == '__main__':
   # Start Prometheus HTTP server on port 8000
   start_http_server(8000)
-
   logging.info('======== Serving metrics at :8000; Metric are collected every 5s ========')
 
-  # Get list of drives
-  drives = get_drives()
-
-  while True:
-    try:
-      for target in hosts:
-        ping_time = ping_function(target)
-        PING_VALUE.labels(target).set(ping_time)
-        logging.info('Sucessfull ping %s', target)
-      time.sleep(5)
-    except:
-      logging.info('Unsucessfull ping %s', target)
-      time.sleep(5)
-    try:
-      for drive in drives:
-        hdd = psutil.disk_usage("/")
-        DISK_TOTAL.labels(device).set(hdd[0])
-        DISK_USAGE.labels(device).set(hdd[1])
-        logging.info('Get disk data %s', drive)
-      time.sleep(5)
-    except:
-      logging.info('Cannot get disk data %s', drive)
-      time.sleep(5) 
+while True:
+  try:
+    for target in hosts:
+      ping_time = ping_function(target)
+      PING_VALUE.labels(target).set(ping_time)
+      logging.info('Sucessfull ping %s', target)
+    time.sleep(20)
+  except:
+    logging.info('Unsucessfull ping %s', target)
+    time.sleep(5)
+  try:
+    disk_info = get_disk_info()
+    for device, info in disk_info.items():
+      DISK_TOTAL.labels(device).set(info['total'])
+      DISK_USAGE.labels(device).set(info['used'])
+      logging.info('Sucessfull get disk data %s', device)
+    time.sleep(20)
+  except:
+    logging.info('Unsucessfull getting disk data %s', device)
+    time.sleep(5) 

@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-import subprocess, psutil
 
-def get_drives() -> list:
-  drives = []
-  for partition in psutil.disk_partitions(all=False):
-    drives.append(partition.device)
-    print(partition)
-  return drives
+import psutil
+types_monitor = ['sd', 'mmc', 'nvme']
 
-drives = get_drives()
+def get_disk_info():
+    disk_info = {}
+    partitions = psutil.disk_partitions(all=False)
+    for partition in partitions:
+        for ptype in types_monitor:
+          if ptype in partition.device:
+            usage = psutil.disk_usage(partition.mountpoint)
+            disk_info[partition.device] = {
+                "mountpoint": partition.mountpoint,
+                "total": usage.total,
+                "used": usage.used,
+                "free": usage.free,
+                "percent": usage.percent
+            }
+    return disk_info
 
-for drive in drives:
-  print(drive)
-  hdd = psutil.disk_usage("/")
-  print("Total: %d GiB" % (hdd[0] / (1024 ** 3)))
-  print("Used:  %d GiB" % (hdd[1] / (1024 ** 3)))
-  print("Free:  %d GiB" % (hdd[2] / (1024 ** 3)))
+print(get_disk_info())

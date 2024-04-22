@@ -9,36 +9,37 @@ services:
       context: .
       args:
         - PING_TARGETS=1.1.1.1,www.google.com
+        - DISK_TYPES_TO_MONITOR=sd,nvme
     volumes:
       - '/:/hostfs:ro'
     ports:
       - 8000:8000
 
-  # prometheus:
-  #   image: prom/prometheus
-  #   container_name: prometheus
-  #   ports:
-  #     - 9090:9090
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ./prometheus:/etc/prometheus
-  #     - prom_data:/prometheus
-  #   depends_on:
-  #     - metrics_exporter
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+    depends_on:
+      - metrics_exporter
 
-  # grafana:
-  #   image: grafana/grafana
-  #   container_name: grafana
-  #   ports:
-  #     - 3000:3000
-  #   volumes:
-  #     - graf_data:/var/lib/grafana
-  #     - ./grafana/data_sources.yml:/etc/grafana/provisioning/datasources/DataSources.yaml
-  #     - ./grafana/dashboard_sources.yml:/etc/grafana/provisioning/dashboards/DashboardSources.yaml
-  #     - ./grafana/dashboard.json:/etc/grafana/initialDashboards/dashboard.json
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - prometheus
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - graf_data:/var/lib/grafana
+      - ./grafana/data_sources.yml:/etc/grafana/provisioning/datasources/DataSources.yaml
+      - ./grafana/dashboard_sources.yml:/etc/grafana/provisioning/dashboards/DashboardSources.yaml
+      - ./grafana/dashboard.json:/etc/grafana/initialDashboards/dashboard.json
+    restart: unless-stopped
+    depends_on:
+      - prometheus
 
 volumes:
   prom_data:
