@@ -3,6 +3,8 @@ FROM python:3.11.8-alpine3.19
 ARG PING_TARGETS
 ENV PING_TARGETS=${PING_TARGETS}
 
+RUN apk add lsblk
+
 WORKDIR /app
 
 COPY python_scraper/custom_metrics.py .
