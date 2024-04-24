@@ -8,7 +8,10 @@ services:
       dockerfile: Dockerfile
       context: .
       args:
-        - PING_TARGETS=1.1.1.1,8.8.8.8,www.google.com
+        - PING_TARGETS=1.1.1.1,www.google.com
+        - DISK_TYPES_TO_MONITOR=sd,nvme
+    volumes:
+      - '/:/hostfs:ro'
     ports:
       - 8000:8000
 

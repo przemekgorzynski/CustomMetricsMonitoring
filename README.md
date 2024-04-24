@@ -1,6 +1,6 @@
 # CustomMetricsMonitoring
 
-Before running update ping targets (PING_TARGETS arg) in `docker-compose.yml` file.
+Before running update argunemts (PING_TARGETS, DISK_TYPES_TO_MONITOR) in `docker-compose.yml` file.
 
 ```
 metrics_exporter:
@@ -10,15 +10,18 @@ metrics_exporter:
     dockerfile: Dockerfile
     args:
       - PING_TARGETS=1.1.1.1,8.8.8.8,www.google.com
+      - DISK_TYPES_TO_MONITOR=sd,nvme,mmc
   ports:
     - 8000:8000
 ```
 
 Available metrics so far:
 - `ping_response_time` - ping response time to remote targets  
+- `node_disk_total_space` - total size of disk device
+- `node_disk_usage_space` - used size of disk device
 
 ## Execution
-`docker-compose up -d`
+`docker-compose up -d --build`
 
 # Endpoints
 
