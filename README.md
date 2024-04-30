@@ -41,4 +41,4 @@ Default credentials are `admin:admin`
 
 http://localhost:3000
 
-![alt text](docs/grafana.png)
+![alt text](docs/grafana_dash.png)

@@ -13,6 +13,8 @@ logging.basicConfig(
 PING_VALUE = Gauge('ping_rsponse_time', 'Time of ping', ['target'])
 DISK_TOTAL = Gauge('node_disk_total_space', 'Ammount of disk space', ['device'])
 DISK_USAGE = Gauge('node_disk_usage_space', 'Ammount of disk usage', ['device'])
+MEMORY_TOTAL = Gauge('node_memory_total_amount', 'Ammount of memory')
+MEMORY_USED = Gauge('node_memory_usage_amount', 'Ammount of memory used')
 
 # Ping Targets
 hosts = (os.environ['PING_TARGETS']).split(',')
@@ -24,20 +26,30 @@ def ping_function(target:str) -> float:
 # Disk metrics
 types_monitor = (os.environ['DISK_TYPES_TO_MONITOR']).split(',')
 def get_disk_info():
-    disk_info = {}
-    partitions = psutil.disk_partitions(all=False)
-    for partition in partitions:
-        for ptype in types_monitor:
-          if ptype in partition.device:
-            usage = psutil.disk_usage(partition.mountpoint)
-            disk_info[partition.device] = {
-                "mountpoint": partition.mountpoint,
-                "total": usage.total,
-                "used": usage.used,
-                "free": usage.free,
-                "percent": usage.percent
-            }
-    return disk_info
+  disk_info = {}
+  partitions = psutil.disk_partitions(all=False)
+  for partition in partitions:
+      for ptype in types_monitor:
+        if ptype in partition.device:
+          usage = psutil.disk_usage(partition.mountpoint)
+          disk_info[partition.device] = {
+              "mountpoint": partition.mountpoint,
+              "total": usage.total,
+              "used": usage.used,
+              "free": usage.free,
+              "percent": usage.percent
+          }
+  return disk_info
+
+# Memory Metrics
+def get_memory_info():
+  memory_info = {}
+  memory = psutil.virtual_memory()
+  memory_info = {
+    "total": memory.total,
+    "used": memory.used
+  }
+  return memory_info
 
 if __name__ == '__main__':
   # Start Prometheus HTTP server on port 8000
@@ -63,4 +75,13 @@ while True:
     time.sleep(20)
   except:
     logging.info('Unsucessfull getting disk data %s', device)
+    time.sleep(5)
+  try:
+    memory_info = get_memory_info()
+    MEMORY_TOTAL.set(memory_info['total'])
+    MEMORY_USED.set(memory_info['used'])
+    logging.info('Sucessfull get memory info')
+    time.sleep(20)
+  except:
+    logging.info('Unsucessfull getting memory info')
     time.sleep(5) 
