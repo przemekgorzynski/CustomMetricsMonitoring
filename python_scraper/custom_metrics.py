@@ -57,31 +57,26 @@ if __name__ == '__main__':
   logging.info('======== Serving metrics at :8000; Metric are collected every 5s ========')
 
 while True:
+  time.sleep(20)
   try:
     for target in hosts:
       ping_time = ping_function(target)
       PING_VALUE.labels(target).set(ping_time)
       logging.info('Sucessfull ping %s', target)
-    time.sleep(20)
   except:
     logging.info('Unsucessfull ping %s', target)
-    time.sleep(5)
   try:
     disk_info = get_disk_info()
     for device, info in disk_info.items():
       DISK_TOTAL.labels(device).set(info['total'])
       DISK_USAGE.labels(device).set(info['used'])
       logging.info('Sucessfull get disk data %s', device)
-    time.sleep(20)
   except:
     logging.info('Unsucessfull getting disk data %s', device)
-    time.sleep(5)
   try:
     memory_info = get_memory_info()
     MEMORY_TOTAL.set(memory_info['total'])
     MEMORY_USED.set(memory_info['used'])
     logging.info('Sucessfull get memory info')
-    time.sleep(20)
   except:
     logging.info('Unsucessfull getting memory info')
-    time.sleep(5) 
