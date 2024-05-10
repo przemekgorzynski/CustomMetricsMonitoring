@@ -21,7 +21,9 @@ Available metrics so far:
 - `node_disk_usage_space` - used size of disk device
 
 ## Execution
-`docker-compose up -d --build`
+```
+docker-compose up -d --build
+```
 
 # Endpoints
 
