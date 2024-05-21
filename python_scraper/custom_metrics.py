@@ -15,6 +15,7 @@ DISK_TOTAL = Gauge('node_disk_total_space', 'Ammount of disk space', ['device'])
 DISK_USAGE = Gauge('node_disk_usage_space', 'Ammount of disk usage', ['device'])
 MEMORY_TOTAL = Gauge('node_memory_total_amount', 'Ammount of memory')
 MEMORY_USED = Gauge('node_memory_usage_amount', 'Ammount of memory used')
+UPTIME = Gauge('uptime', 'Uptime')
 
 # Ping Targets
 hosts = (os.environ['PING_TARGETS']).split(',')
@@ -54,7 +55,7 @@ def get_memory_info():
 if __name__ == '__main__':
   # Start Prometheus HTTP server on port 8000
   start_http_server(8000)
-  logging.info('======== Serving metrics at :8000; Metric are collected every 5s ========')
+  logging.info('======== Serving metrics at :8000; Metric are collected every 20s ========')
 
   while True:
     time.sleep(20)
@@ -80,3 +81,7 @@ if __name__ == '__main__':
       logging.info('Sucessfull get memory info')
     except:
       logging.info('Unsucessfull getting memory info')
+    try:
+      UPTIME.set(time.time() - psutil.boot_time())
+    except:
+      logging.info('Cannot get uptime')
