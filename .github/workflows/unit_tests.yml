@@ -1,0 +1,32 @@
+---
+name: Dry-run
+run-name: Commit on branch ${{ github.ref_name }} by @${{ github.actor }}
+    
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    types: [opened, edited, reopened]
+  workflow_dispatch:
+    
+jobs:
+  Dry-Run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - name: Install Compose
+        uses: ndeloof/install-compose-action@v0.0.1
+        with:
+          version: 'latest'
+          legacy: true    # will also install in PATH as `docker-compose`
+      - name: Run docker-compose
+        run: docker-compose up -d --build
+      - name: Print running containers
+        run: |
+          sleep 20
+          docker ps -a
+      - name: Run reachability testing script
+        run: |
+          ./.github/tests/reachability_tests.sh
