@@ -1,10 +1,11 @@
+---
 version: '3.8'
 services:
 
   metrics_exporter:
     container_name: metrics_exporter
     image: metrics_exporter
-    build: 
+    build:
       dockerfile: Dockerfile
       context: .
       args:
