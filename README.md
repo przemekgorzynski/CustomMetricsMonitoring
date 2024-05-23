@@ -1,6 +1,8 @@
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54) 
-![YAML](https://img.shields.io/badge/yaml-%23ffffff.svg?style=for-the-badge&logo=yaml&logoColor=151515) 
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54&style=social)
+![YAML](https://img.shields.io/badge/yaml-%23ffffff.svg?style=for-the-badge&logo=yaml&logoColor=151515&style=social)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white&style=social)
+![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white&style=social)
+*[.](https://github.com/Ileriayo/markdown-badges?tab=readme-ov-file#streaming)*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -8,6 +10,9 @@
 [![YAMLlint](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/yamllint.yml/badge.svg)](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/yamllint.yml)
 
 # CustomMetricsMonitoring
+
+Project to expose and visialize host's metrics. Metrics exporter written in Python, and visualized using Prometheus and Grafana. Stack is deployed with docker-compose. 
+
 
 Before running update argunemts (PING_TARGETS, DISK_TYPES_TO_MONITOR) in `docker-compose.yml` file.
 
@@ -28,6 +33,9 @@ Available metrics so far:
 - `ping_response_time` - ping response time to remote targets  
 - `node_disk_total_space` - total size of disk device
 - `node_disk_usage_space` - used size of disk device
+- `node_memory_total_amount` - total amount od memory
+- `node_memory_usage_amount` - used memory amount
+- `uptime` - host uptime
 
 ## Execution
 ```
