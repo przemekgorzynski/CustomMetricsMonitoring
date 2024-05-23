@@ -17,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
       - name: Install Compose
-        uses: ndeloof/install-compose-action@v0.0.1
+        uses: ndeloof/install-compose-action@4a33bc31f327b8231c4f343f6fba704fedc0fa23 # v0.0.1
         with:
           version: 'latest'
           legacy: true    # will also install in PATH as `docker-compose`
