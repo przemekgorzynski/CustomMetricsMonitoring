@@ -52,7 +52,7 @@ http://localhost:8000
 ## Prometheus
 http://localhost:9090
 
-![alt text](docs/prometheus.png)
+![alt text](docs/prometheus_metrics.png)
 
 
 ## Grafana
@@ -60,4 +60,4 @@ Default credentials are `admin:admin`
 
 http://localhost:3000
 
-![alt text](docs/grafana_dash.png)
+![alt text](docs/grafana_dashboard.png)
