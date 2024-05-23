@@ -1,3 +1,10 @@
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54) 
+![YAML](https://img.shields.io/badge/yaml-%23ffffff.svg?style=for-the-badge&logo=yaml&logoColor=151515) 
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+
+[![Dry-run](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/unit_tests.yml)
+[![YAMLlint](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/yamllint.yml/badge.svg)](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/yamllint.yml)
+
 # CustomMetricsMonitoring
 
 Before running update argunemts (PING_TARGETS, DISK_TYPES_TO_MONITOR) in `docker-compose.yml` file.
