@@ -2,7 +2,7 @@
 ![YAML](https://img.shields.io/badge/yaml-%23ffffff.svg?style=for-the-badge&logo=yaml&logoColor=151515) 
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
-https://github.com/przemekgorzynski/CustomMetricsMonitoring/blob/master/LICENSE
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [![Dry-run](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/unit_tests.yml)
 [![YAMLlint](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/yamllint.yml/badge.svg)](https://github.com/przemekgorzynski/CustomMetricsMonitoring/actions/workflows/yamllint.yml)
