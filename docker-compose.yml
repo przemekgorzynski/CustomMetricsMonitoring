@@ -29,7 +29,7 @@ services:
       - metrics_exporter
 
   grafana:
-    image: grafana/grafana:11.0.0@sha256:a80bc3848cf5d4b2958ea25dbeb36fa9442ef4be8c73fe4bff11340307c32919
+    image: grafana/grafana:11.0.0@sha256:99ed02202d5166b6d25b821fa34ed184fab9ed0c18996ab0b6ce0fd35a3b67fd
     container_name: grafana
     ports:
       - 3000:3000
