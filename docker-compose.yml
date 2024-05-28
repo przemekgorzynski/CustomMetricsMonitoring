@@ -17,7 +17,7 @@ services:
       - 8000:8000
 
   prometheus:
-    image: prom/prometheus@sha256:5c435642ca4d8427ca26f4901c11114023004709037880cd7860d5b7176aa731
+    image: prom/prometheus:v2.52.0@sha256:5c435642ca4d8427ca26f4901c11114023004709037880cd7860d5b7176aa731
     container_name: prometheus
     ports:
       - 9090:9090
@@ -29,7 +29,7 @@ services:
       - metrics_exporter
 
   grafana:
-    image: grafana/grafana@sha256:a80bc3848cf5d4b2958ea25dbeb36fa9442ef4be8c73fe4bff11340307c32919
+    image: grafana/grafana:11.0.0@sha256:a80bc3848cf5d4b2958ea25dbeb36fa9442ef4be8c73fe4bff11340307c32919
     container_name: grafana
     ports:
       - 3000:3000
