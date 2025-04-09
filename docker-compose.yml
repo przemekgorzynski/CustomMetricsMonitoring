@@ -27,8 +27,6 @@ services:
     volumes:
       - ./prometheus:/etc/prometheus
       - prom_data:/prometheus
-    environment:
-      - "GF_LOG_LEVEL=info"
     labels:
       - "tool=prometheus"
     healthcheck:
@@ -51,6 +49,8 @@ services:
       - ./grafana/data_sources.yml:/etc/grafana/provisioning/datasources/DataSources.yaml
       - ./grafana/dashboard_sources.yml:/etc/grafana/provisioning/dashboards/DashboardSources.yaml
       - ./grafana/dashboard.json:/etc/grafana/initialDashboards/dashboard.json
+    environment:
+      - "GF_LOG_LEVEL=info"
     labels:
       - "tool=grafana"
     healthcheck:
