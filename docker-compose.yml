@@ -16,7 +16,7 @@ services:
     ports:
       - 8000:8000
     labels:
-      - tool: metrics_exporter
+      - "tool=metrics_exporter"
     restart: unless-stopped
 
   prometheus:
@@ -28,7 +28,7 @@ services:
       - ./prometheus:/etc/prometheus
       - prom_data:/prometheus
     labels:
-      - tool: prometheus
+      - "tool=prometheus"
     healthcheck:
       test: wget -q http://localhost:9090 -O index_check.html || exit 1
       interval: 20s
@@ -50,7 +50,7 @@ services:
       - ./grafana/dashboard_sources.yml:/etc/grafana/provisioning/dashboards/DashboardSources.yaml
       - ./grafana/dashboard.json:/etc/grafana/initialDashboards/dashboard.json
     labels:
-      - tool: grafana
+      - "tool=grafana"
     healthcheck:
       test: curl http://localhost:3000/api/health || exit 1
       interval: 20s
