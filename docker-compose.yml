@@ -27,6 +27,8 @@ services:
     volumes:
       - ./prometheus:/etc/prometheus
       - prom_data:/prometheus
+    environment:
+      - "GF_LOG_LEVEL=info"
     labels:
       - "tool=prometheus"
     healthcheck:
