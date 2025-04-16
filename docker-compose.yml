@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:v3.3.0@sha256:339ce86a59413be18d0e445472891d022725b4803fab609069110205e79fb2f1
+    image: prom/prometheus:v2.53.1
     container_name: prometheus
     ports:
       - 9090:9090
@@ -40,7 +40,7 @@ services:
       - metrics_exporter
 
   grafana:
-    image: grafana/grafana:11.6.0@sha256:62d2b9d20a19714ebfe48d1bb405086081bc602aa053e28cf6d73c7537640dfb
+    image: grafana/grafana:11.1.1
     container_name: grafana
     ports:
       - 3000:3000
