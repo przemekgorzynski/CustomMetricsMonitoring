@@ -6,5 +6,5 @@
   "assignees": ["przemekgorzynski"],
   "baseBranches": ["main"],
   "labels": ["renovate"],
-  "pinDigests": true
+  "pinDigests": false
 }
