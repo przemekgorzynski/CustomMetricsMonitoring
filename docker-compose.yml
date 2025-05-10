@@ -19,6 +19,14 @@ services:
       - "tool=metrics_exporter"
     restart: unless-stopped
 
+  smartctl_exporter:
+    image: prometheuscommunity/smartctl-exporter
+    container_name: smartctl_exporter
+    privileged: true
+    user: root
+    ports:
+      - "9633:9633"
+
   prometheus:
     image: prom/prometheus:v3.3.1
     container_name: prometheus
