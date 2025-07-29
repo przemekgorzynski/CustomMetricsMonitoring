@@ -3,8 +3,14 @@
   "extends": [
     "config:recommended"
   ],
-  "assignees": ["przemekgorzynski"],
-  "baseBranches": ["main"],
-  "labels": ["renovate"],
+  "assignees": [
+    "przemekgorzynski"
+  ],
+  "baseBranchPatterns": [
+    "main"
+  ],
+  "labels": [
+    "renovate"
+  ],
   "pinDigests": false
 }
