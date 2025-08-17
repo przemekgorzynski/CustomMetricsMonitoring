@@ -1,4 +1,4 @@
-FROM python:3.11-slim-buster
+FROM python:3.11
 
 ARG PING_TARGETS
 ARG DISK_TYPES_TO_MONITOR
