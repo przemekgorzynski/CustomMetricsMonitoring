@@ -78,7 +78,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "time() - homelab_boot_time_seconds",
+          "expr": "time() - max(homelab_boot_time_seconds)",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -156,7 +156,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_memory_used_bytes / homelab_memory_total_bytes * 100",
+          "expr": "max(homelab_memory_used_bytes) / max(homelab_memory_total_bytes) * 100",
           "format": "time_series",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
@@ -231,7 +231,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_memory_total_bytes / 1024 / 1024 / 1024\n",
+          "expr": "max(homelab_memory_total_bytes) / 1024 / 1024 / 1024",
           "format": "table",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
@@ -311,7 +311,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_cpu_usage_percent",
+          "expr": "max(homelab_cpu_usage_percent)",
           "format": "time_series",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
@@ -386,8 +386,8 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_swap_used_bytes",
-          "format": "table",
+          "expr": "max(homelab_swap_used_bytes)",
+          "format": "time_series",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": true,
@@ -504,7 +504,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "homelab_load_average",
+          "expr": "max by (period) (homelab_load_average)",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{period}}",
@@ -607,7 +607,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "homelab_temperature_celsius",
+          "expr": "max by (sensor) (homelab_temperature_celsius)",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{sensor}}",
@@ -690,7 +690,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_disk_size_bytes / 1024 / 1024 / 1024  / 1024",
+          "expr": "max by (device) (homelab_disk_size_bytes) / 1024 / 1024 / 1024 / 1024",
           "format": "time_series",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
@@ -795,7 +795,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "homelab_disk_used_bytes / homelab_disk_size_bytes * 100",
+          "expr": "max by (device) (homelab_disk_used_bytes) / max by (device) (homelab_disk_size_bytes) * 100",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{device}}",
@@ -898,7 +898,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "rate(homelab_disk_read_bytes_total[5m])",
+          "expr": "max by (device) (rate(homelab_disk_read_bytes_total[5m]))",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "read {{device}}",
@@ -913,7 +913,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "rate(homelab_disk_write_bytes_total[5m])",
+          "expr": "max by (device) (rate(homelab_disk_write_bytes_total[5m]))",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "write {{device}}",
@@ -1016,7 +1016,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "homelab_disk_inodes_used / homelab_disk_inodes * 100",
+          "expr": "max by (device) (homelab_disk_inodes_used) / max by (device) (homelab_disk_inodes) * 100",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{device}}",
@@ -1118,8 +1118,8 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_zpool_online",
-          "format": "table",
+          "expr": "max by (pool, health) (homelab_zpool_online)",
+          "format": "time_series",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": true,
@@ -1198,7 +1198,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_zpool_capacity_percent",
+          "expr": "max by (pool) (homelab_zpool_capacity_percent)",
           "format": "time_series",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
@@ -1273,8 +1273,8 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_zpool_allocated_bytes",
-          "format": "table",
+          "expr": "max by (pool) (homelab_zpool_allocated_bytes)",
+          "format": "time_series",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": true,
@@ -1291,8 +1291,8 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_zpool_size_bytes",
-          "format": "table",
+          "expr": "max by (pool) (homelab_zpool_size_bytes)",
+          "format": "time_series",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": true,
@@ -1397,7 +1397,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "homelab_zpool_fragmentation_percent",
+          "expr": "max by (pool) (homelab_zpool_fragmentation_percent)",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{pool}}",
@@ -1410,12 +1410,116 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P1809F7CD0C75ACF3"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent",
+          "max": 100
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 27,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "max by (pool) (homelab_zpool_capacity_percent)",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "legendFormat": "{{pool}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Pool Usage",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 49
       },
       "id": 7,
       "panels": [],
@@ -1485,7 +1589,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 42
+        "y": 50
       },
       "id": 1,
       "options": {
@@ -1509,7 +1613,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "homelab_ping_response_time_seconds",
+          "expr": "max by (target) (homelab_ping_response_time_seconds)",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -1590,7 +1694,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 42
+        "y": 50
       },
       "id": 17,
       "options": {
@@ -1614,7 +1718,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "homelab_ping_up",
+          "expr": "max by (target) (homelab_ping_up)",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{target}}",
@@ -1693,7 +1797,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 50
+        "y": 58
       },
       "id": 18,
       "options": {
@@ -1717,7 +1821,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "rate(homelab_network_receive_bytes_total[5m])",
+          "expr": "max by (device) (rate(homelab_network_receive_bytes_total[5m]))",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "rx {{device}}",
@@ -1732,7 +1836,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "rate(homelab_network_transmit_bytes_total[5m])",
+          "expr": "max by (device) (rate(homelab_network_transmit_bytes_total[5m]))",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "tx {{device}}",
@@ -1811,7 +1915,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 50
+        "y": 58
       },
       "id": 19,
       "options": {
@@ -1835,7 +1939,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "rate(homelab_network_errors_total[5m])",
+          "expr": "max by (device, direction) (rate(homelab_network_errors_total[5m]))",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{device}} {{direction}}",
@@ -1853,7 +1957,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 66
       },
       "id": 20,
       "panels": [],
@@ -1927,7 +2031,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "id": 21,
       "options": {
@@ -1951,7 +2055,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "rate(homelab_scrape_errors_total[5m])",
+          "expr": "max by (collector) (rate(homelab_scrape_errors_total[5m]))",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{collector}}",
@@ -1978,6 +2082,6 @@
   "timezone": "browser",
   "title": "Dashboard",
   "uid": "adj3hhrpxpce8f",
-  "version": 4,
+  "version": 6,
   "weekStart": ""
 }

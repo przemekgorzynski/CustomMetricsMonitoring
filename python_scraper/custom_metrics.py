@@ -71,16 +71,24 @@ def disk_metrics():
     DISK_INODES.labels(partition.device).set(stat.f_files)
     DISK_INODES_USED.labels(partition.device).set(stat.f_files - stat.f_ffree)
 
+# Partitions carry a partition file in sysfs, whole disks do not
+def whole_disk(device:str) -> bool:
+  return not os.path.exists(f'/sys/class/block/{device}/partition')
+
 def disk_io_metrics():
   for device, io in psutil.disk_io_counters(perdisk=True).items():
-    if not monitored('/dev/' + device):
+    if not monitored('/dev/' + device) or not whole_disk(device):
       continue
     DISK_READ.labels(device).set(io.read_bytes)
     DISK_WRITE.labels(device).set(io.write_bytes)
 
+# Physical interfaces link to their device in sysfs, veth and bridges do not
+def physical_nic(device:str) -> bool:
+  return os.path.exists(f'/sys/class/net/{device}/device')
+
 def network_metrics():
   for device, io in psutil.net_io_counters(pernic=True).items():
-    if device == 'lo':
+    if not physical_nic(device):
       continue
     NET_RECV.labels(device).set(io.bytes_recv)
     NET_SENT.labels(device).set(io.bytes_sent)
