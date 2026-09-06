@@ -1118,12 +1118,12 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by (pool, health) (homelab_zpool_online)",
+          "expr": "max by (pool) (homelab_zpool_online)",
           "format": "time_series",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": true,
-          "legendFormat": "{{pool}} {{health}}",
+          "legendFormat": "{{pool}}",
           "range": false,
           "refId": "A",
           "useBackend": false
@@ -2082,6 +2082,6 @@
   "timezone": "browser",
   "title": "Dashboard",
   "uid": "adj3hhrpxpce8f",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }
