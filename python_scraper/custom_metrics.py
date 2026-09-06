@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from prometheus_client import start_http_server, Gauge, Counter
-import time, os, logging, psutil
+import time, os, subprocess, logging, psutil
 from ping3 import ping
 
 # Logging definition
@@ -28,6 +28,12 @@ CPU_USAGE = Gauge('homelab_cpu_usage_percent', 'CPU usage across all cores')
 LOAD_AVERAGE = Gauge('homelab_load_average', 'Load average', ['period'])
 TEMPERATURE = Gauge('homelab_temperature_celsius', 'Sensor temperature', ['sensor'])
 BOOT_TIME = Gauge('homelab_boot_time_seconds', 'Unix time of last boot')
+ZPOOL_SIZE = Gauge('homelab_zpool_size_bytes', 'Pool raw size', ['pool'])
+ZPOOL_ALLOCATED = Gauge('homelab_zpool_allocated_bytes', 'Pool raw space allocated', ['pool'])
+ZPOOL_FREE = Gauge('homelab_zpool_free_bytes', 'Pool raw space free', ['pool'])
+ZPOOL_CAPACITY = Gauge('homelab_zpool_capacity_percent', 'Pool space used', ['pool'])
+ZPOOL_FRAGMENTATION = Gauge('homelab_zpool_fragmentation_percent', 'Pool free space fragmentation', ['pool'])
+ZPOOL_ONLINE = Gauge('homelab_zpool_online', 'Pool health is ONLINE', ['pool', 'health'])
 SCRAPE_ERRORS = Counter('homelab_scrape_errors_total', 'Failed collections', ['collector'])
 
 # Ping Targets
@@ -98,6 +104,22 @@ def temperature_metrics():
     for entry in entries:
       TEMPERATURE.labels(entry.label or name).set(entry.current)
 
+# Pool capacity is raw, matching zpool list, so it does not equal the usable
+# space that statvfs reports for the datasets
+def zpool_metrics():
+  if not os.path.exists('/dev/zfs'):
+    return
+  fields = 'name,size,alloc,free,cap,frag,health'
+  output = subprocess.run(['zpool', 'list', '-Hp', '-o', fields], capture_output=True, text=True, check=True)
+  for line in output.stdout.splitlines():
+    pool, size, alloc, free, cap, frag, health = line.split('\t')
+    ZPOOL_SIZE.labels(pool).set(int(size))
+    ZPOOL_ALLOCATED.labels(pool).set(int(alloc))
+    ZPOOL_FREE.labels(pool).set(int(free))
+    ZPOOL_CAPACITY.labels(pool).set(int(cap))
+    ZPOOL_FRAGMENTATION.labels(pool).set(int(frag) if frag.isdigit() else float('nan'))
+    ZPOOL_ONLINE.labels(pool, health).set(1 if health == 'ONLINE' else 0)
+
 def uptime_metrics():
   BOOT_TIME.set(psutil.boot_time())
 
@@ -109,6 +131,7 @@ collectors = {
   'memory': memory_metrics,
   'cpu': cpu_metrics,
   'temperature': temperature_metrics,
+  'zpool': zpool_metrics,
   'uptime': uptime_metrics,
 }
 

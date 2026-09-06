@@ -11,7 +11,7 @@ services:
       args:
         - PING_TARGETS=1.1.1.1,www.google.com
         - DISK_TYPES_TO_MONITOR=sd,nvme
-        - DISK_DEVICES=tank,ssd
+        - DISK_DEVICES=
     volumes:
       - '/:/hostfs:ro'
     ports:

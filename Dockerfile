@@ -2,14 +2,15 @@ FROM python:3.14
 
 ARG PING_TARGETS=1.1.1.1,www.google.com
 ARG DISK_TYPES_TO_MONITOR=sd,nvme
-ARG DISK_DEVICES=tank,ssd
+ARG DISK_DEVICES=
 ENV PING_TARGETS=${PING_TARGETS}
 ENV DISK_TYPES_TO_MONITOR=${DISK_TYPES_TO_MONITOR}
 ENV DISK_DEVICES=${DISK_DEVICES}
 
-RUN apt-get update -y && \
+RUN sed -i 's/^Components: main$/Components: main contrib/' /etc/apt/sources.list.d/debian.sources && \
+  apt-get update -y && \
   apt-get install --no-install-recommends -y -q \
-  libpq-dev build-essential libsnappy-dev && \
+  libpq-dev build-essential libsnappy-dev zfsutils-linux && \
   apt-get clean && apt-get autoremove && \
   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
