@@ -1,9 +1,11 @@
 FROM python:3.14
 
-ARG PING_TARGETS
-ARG DISK_TYPES_TO_MONITOR
+ARG PING_TARGETS=1.1.1.1,www.google.com
+ARG DISK_TYPES_TO_MONITOR=sd,nvme
+ARG DISK_DEVICES=tank,ssd
 ENV PING_TARGETS=${PING_TARGETS}
 ENV DISK_TYPES_TO_MONITOR=${DISK_TYPES_TO_MONITOR}
+ENV DISK_DEVICES=${DISK_DEVICES}
 
 RUN apt-get update -y && \
   apt-get install --no-install-recommends -y -q \

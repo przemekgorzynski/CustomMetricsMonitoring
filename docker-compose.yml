@@ -1,16 +1,17 @@
 ---
-version: '3.8'
 services:
 
   metrics_exporter:
     container_name: metrics_exporter
     image: metrics_exporter
+    pull_policy: build
     build:
       dockerfile: Dockerfile
       context: .
       args:
         - PING_TARGETS=1.1.1.1,www.google.com
         - DISK_TYPES_TO_MONITOR=sd,nvme
+        - DISK_DEVICES=tank,ssd
     volumes:
       - '/:/hostfs:ro'
     ports:
@@ -21,6 +22,7 @@ services:
 
   smartctl_exporter:
     image: prometheuscommunity/smartctl-exporter
+    platform: linux/amd64
     container_name: smartctl_exporter
     privileged: true
     user: root
