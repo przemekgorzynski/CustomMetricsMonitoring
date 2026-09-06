@@ -1,4 +1,4 @@
-FROM python:3.14
+FROM ubuntu:26.04
 
 ARG PING_TARGETS=1.1.1.1,www.google.com
 ARG DISK_TYPES_TO_MONITOR=sd,nvme
@@ -7,10 +7,9 @@ ENV PING_TARGETS=${PING_TARGETS}
 ENV DISK_TYPES_TO_MONITOR=${DISK_TYPES_TO_MONITOR}
 ENV DISK_DEVICES=${DISK_DEVICES}
 
-RUN sed -i 's/^Components: main$/Components: main contrib/' /etc/apt/sources.list.d/debian.sources && \
-  apt-get update -y && \
+RUN apt-get update -y && \
   apt-get install --no-install-recommends -y -q \
-  libpq-dev build-essential libsnappy-dev zfsutils-linux && \
+  python3 python3-venv zfsutils-linux ca-certificates && \
   apt-get clean && apt-get autoremove && \
   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -19,7 +18,7 @@ WORKDIR /app
 COPY python_scraper/custom_metrics.py .
 COPY python_scraper/requirements.txt .
 
-RUN pip install -r requirements.txt
+RUN python3 -m venv /venv && /venv/bin/pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8000
-CMD ["python", "/app/custom_metrics.py" ]
+CMD ["/venv/bin/python", "/app/custom_metrics.py" ]

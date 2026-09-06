@@ -110,7 +110,9 @@ def zpool_metrics():
   if not os.path.exists('/dev/zfs'):
     return
   fields = 'name,size,alloc,free,cap,frag,health'
-  output = subprocess.run(['zpool', 'list', '-Hp', '-o', fields], capture_output=True, text=True, check=True)
+  output = subprocess.run(['zpool', 'list', '-Hp', '-o', fields], capture_output=True, text=True)
+  if output.returncode:
+    raise RuntimeError(output.stderr.strip() or f'zpool exited {output.returncode}')
   for line in output.stdout.splitlines():
     pool, size, alloc, free, cap, frag, health = line.split('\t')
     ZPOOL_SIZE.labels(pool).set(int(size))
