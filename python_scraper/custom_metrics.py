@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from prometheus_client import start_http_server, Gauge
+from prometheus_client import start_http_server, Gauge, Counter
 import time, os, logging, psutil
 from ping3 import ping
 
@@ -9,48 +9,108 @@ logging.basicConfig(
   datefmt='%Y-%m-%d %H:%M:%S',
 )
 
-# Define Prometheus gauge metric
-PING_VALUE = Gauge('ping_rsponse_time', 'Time of ping', ['target'])
-DISK_TOTAL = Gauge('node_disk_total_space', 'Ammount of disk space', ['device'])
-DISK_USAGE = Gauge('node_disk_usage_space', 'Ammount of disk usage', ['device'])
-MEMORY_TOTAL = Gauge('node_memory_total_amount', 'Ammount of memory')
-MEMORY_USED = Gauge('node_memory_usage_amount', 'Ammount of memory used')
-UPTIME = Gauge('uptime', 'Uptime')
+# Define Prometheus metrics
+PING_TIME = Gauge('homelab_ping_response_time_seconds', 'Ping round trip time', ['target'])
+PING_UP = Gauge('homelab_ping_up', 'Ping reachable (1) or not (0)', ['target'])
+DISK_SIZE = Gauge('homelab_disk_size_bytes', 'Disk size', ['device'])
+DISK_USED = Gauge('homelab_disk_used_bytes', 'Disk space used', ['device'])
+DISK_INODES = Gauge('homelab_disk_inodes', 'Inodes on the filesystem', ['device'])
+DISK_INODES_USED = Gauge('homelab_disk_inodes_used', 'Inodes used', ['device'])
+DISK_READ = Gauge('homelab_disk_read_bytes_total', 'Bytes read since boot', ['device'])
+DISK_WRITE = Gauge('homelab_disk_write_bytes_total', 'Bytes written since boot', ['device'])
+NET_RECV = Gauge('homelab_network_receive_bytes_total', 'Bytes received since boot', ['device'])
+NET_SENT = Gauge('homelab_network_transmit_bytes_total', 'Bytes sent since boot', ['device'])
+NET_ERRORS = Gauge('homelab_network_errors_total', 'Network errors since boot', ['device', 'direction'])
+MEMORY_TOTAL = Gauge('homelab_memory_total_bytes', 'Total memory')
+MEMORY_USED = Gauge('homelab_memory_used_bytes', 'Memory used')
+SWAP_USED = Gauge('homelab_swap_used_bytes', 'Swap used')
+CPU_USAGE = Gauge('homelab_cpu_usage_percent', 'CPU usage across all cores')
+LOAD_AVERAGE = Gauge('homelab_load_average', 'Load average', ['period'])
+TEMPERATURE = Gauge('homelab_temperature_celsius', 'Sensor temperature', ['sensor'])
+BOOT_TIME = Gauge('homelab_boot_time_seconds', 'Unix time of last boot')
+SCRAPE_ERRORS = Counter('homelab_scrape_errors_total', 'Failed collections', ['collector'])
 
 # Ping Targets
 hosts = (os.environ['PING_TARGETS']).split(',')
 
-def ping_function(target:str) -> float:
-  ping_time = ping(target, unit='s', timeout=10)
-  return ping_time
+def ping_metrics():
+  for target in hosts:
+    ping_time = ping(target, unit='s', timeout=10)
+    if isinstance(ping_time, float):
+      PING_TIME.labels(target).set(ping_time)
+      PING_UP.labels(target).set(1)
+    else:
+      PING_TIME.labels(target).set(float('nan'))
+      PING_UP.labels(target).set(0)
 
-# Disk metrics
+# Disk metrics. HOST_FS_PREFIX points at the host root when running in a container
 types_monitor = (os.environ['DISK_TYPES_TO_MONITOR']).split(',')
-def get_disk_info():
-  disk_info = {}
-  partitions = psutil.disk_partitions(all=False)
-  for partition in partitions:
-      for ptype in types_monitor:
-        if ptype in partition.device:
-          usage = psutil.disk_usage(partition.mountpoint)
-          disk_info[partition.device] = {
-              "mountpoint": partition.mountpoint,
-              "total": usage.total,
-              "used": usage.used,
-              "free": usage.free,
-              "percent": usage.percent
-          }
-  return disk_info
+disk_devices = (os.environ.get('DISK_DEVICES', '')).split(',')
+host_fs = os.environ.get('HOST_FS_PREFIX', '')
 
-# Memory Metrics
-def get_memory_info():
-  memory_info = {}
-  memory = psutil.virtual_memory()
-  memory_info = {
-    "total": memory.total,
-    "used": memory.used
-  }
-  return memory_info
+# Block devices match on type substring, pools (zfs, btrfs) on their exact name
+def monitored(device:str) -> bool:
+  if device.startswith('/dev/'):
+    return any(ptype in device for ptype in types_monitor)
+  return device in disk_devices
+
+def disk_metrics():
+  for partition in psutil.disk_partitions(all=False):
+    if not monitored(partition.device):
+      continue
+    usage = psutil.disk_usage(host_fs + partition.mountpoint)
+    stat = os.statvfs(host_fs + partition.mountpoint)
+    DISK_SIZE.labels(partition.device).set(usage.total)
+    DISK_USED.labels(partition.device).set(usage.used)
+    DISK_INODES.labels(partition.device).set(stat.f_files)
+    DISK_INODES_USED.labels(partition.device).set(stat.f_files - stat.f_ffree)
+
+def disk_io_metrics():
+  for device, io in psutil.disk_io_counters(perdisk=True).items():
+    if not monitored('/dev/' + device):
+      continue
+    DISK_READ.labels(device).set(io.read_bytes)
+    DISK_WRITE.labels(device).set(io.write_bytes)
+
+def network_metrics():
+  for device, io in psutil.net_io_counters(pernic=True).items():
+    if device == 'lo':
+      continue
+    NET_RECV.labels(device).set(io.bytes_recv)
+    NET_SENT.labels(device).set(io.bytes_sent)
+    NET_ERRORS.labels(device, 'receive').set(io.errin + io.dropin)
+    NET_ERRORS.labels(device, 'transmit').set(io.errout + io.dropout)
+
+def memory_metrics():
+  MEMORY_TOTAL.set(psutil.virtual_memory().total)
+  MEMORY_USED.set(psutil.virtual_memory().used)
+  SWAP_USED.set(psutil.swap_memory().used)
+
+def cpu_metrics():
+  CPU_USAGE.set(psutil.cpu_percent())
+  for period, value in zip(['1m', '5m', '15m'], psutil.getloadavg()):
+    LOAD_AVERAGE.labels(period).set(value)
+
+def temperature_metrics():
+  # Linux only, psutil does not expose sensors elsewhere
+  sensors = getattr(psutil, 'sensors_temperatures', dict)()
+  for name, entries in sensors.items():
+    for entry in entries:
+      TEMPERATURE.labels(entry.label or name).set(entry.current)
+
+def uptime_metrics():
+  BOOT_TIME.set(psutil.boot_time())
+
+collectors = {
+  'ping': ping_metrics,
+  'disk': disk_metrics,
+  'disk_io': disk_io_metrics,
+  'network': network_metrics,
+  'memory': memory_metrics,
+  'cpu': cpu_metrics,
+  'temperature': temperature_metrics,
+  'uptime': uptime_metrics,
+}
 
 if __name__ == '__main__':
   # Start Prometheus HTTP server on port 8000
@@ -59,29 +119,10 @@ if __name__ == '__main__':
 
   while True:
     time.sleep(20)
-    try:
-      for target in hosts:
-        ping_time = ping_function(target)
-        PING_VALUE.labels(target).set(ping_time)
-        logging.info('Sucessfull ping %s', target)
-    except:
-      logging.info('Unsucessfull ping %s', target)
-    try:
-      disk_info = get_disk_info()
-      for device, info in disk_info.items():
-        DISK_TOTAL.labels(device).set(info['total'])
-        DISK_USAGE.labels(device).set(info['used'])
-        logging.info('Sucessfull get disk data %s', device)
-    except:
-      logging.info('Unsucessfull getting disk data %s', device)
-    try:
-      memory_info = get_memory_info()
-      MEMORY_TOTAL.set(memory_info['total'])
-      MEMORY_USED.set(memory_info['used'])
-      logging.info('Sucessfull get memory info')
-    except:
-      logging.info('Unsucessfull getting memory info')
-    try:
-      UPTIME.set(time.time() - psutil.boot_time())
-    except:
-      logging.info('Cannot get uptime')
+    for name, collector in collectors.items():
+      try:
+        collector()
+        logging.info('Collected %s', name)
+      except Exception as error:
+        SCRAPE_ERRORS.labels(name).inc()
+        logging.warning('Failed to collect %s: %s', name, error)
