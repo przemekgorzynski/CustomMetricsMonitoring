@@ -1236,7 +1236,8 @@
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "bytes",
+          "decimals": 3
         },
         "overrides": []
       },
@@ -1248,7 +1249,7 @@
       },
       "id": 25,
       "options": {
-        "colorMode": "value",
+        "colorMode": "none",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
@@ -1468,8 +1469,7 @@
               }
             ]
           },
-          "unit": "percent",
-          "max": 100
+          "unit": "bytes"
         },
         "overrides": []
       },
@@ -1501,7 +1501,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "max by (pool) (homelab_zpool_capacity_percent)",
+          "expr": "max by (pool) (homelab_zpool_allocated_bytes{pool=\"$pool\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{pool}}",
@@ -1510,8 +1510,11 @@
           "useBackend": false
         }
       ],
-      "title": "Pool Usage",
-      "type": "timeseries"
+      "title": "Pool Allocated - $pool",
+      "type": "timeseries",
+      "repeat": "pool",
+      "repeatDirection": "h",
+      "maxPerRow": 2
     },
     {
       "collapsed": false,
@@ -2072,7 +2075,37 @@
   "schemaVersion": 39,
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "pool",
+        "label": "Pool",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "P1809F7CD0C75ACF3"
+        },
+        "definition": "label_values(homelab_zpool_allocated_bytes, pool)",
+        "query": {
+          "query": "label_values(homelab_zpool_allocated_bytes, pool)",
+          "refId": "PoolVariable"
+        },
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "hide": 2,
+        "includeAll": true,
+        "multi": true,
+        "refresh": 1,
+        "regex": "",
+        "sort": 1
+      }
+    ]
   },
   "time": {
     "from": "now-1h",
