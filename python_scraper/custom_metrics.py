@@ -161,6 +161,11 @@ collectors = {
   'uptime': uptime_metrics,
 }
 
+# A counter child is only created once it is incremented, so a healthy run
+# exports nothing and the panel cannot be told apart from a dead exporter
+for name in collectors:
+  SCRAPE_ERRORS.labels(name)
+
 if __name__ == '__main__':
   # Start Prometheus HTTP server on port 8000
   start_http_server(8000)
