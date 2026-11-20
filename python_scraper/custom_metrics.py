@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from prometheus_client import start_http_server, Gauge, Counter
-import time, os, subprocess, logging, psutil
+import time, os, glob, subprocess, logging, psutil
 from ping3 import ping
 
 # Logging definition
@@ -26,7 +26,7 @@ MEMORY_USED = Gauge('homelab_memory_used_bytes', 'Memory used')
 SWAP_USED = Gauge('homelab_swap_used_bytes', 'Swap used')
 CPU_USAGE = Gauge('homelab_cpu_usage_percent', 'CPU usage across all cores')
 LOAD_AVERAGE = Gauge('homelab_load_average', 'Load average', ['period'])
-TEMPERATURE = Gauge('homelab_temperature_celsius', 'Sensor temperature', ['sensor'])
+TEMPERATURE = Gauge('homelab_temperature_celsius', 'Sensor temperature', ['chip', 'sensor'])
 BOOT_TIME = Gauge('homelab_boot_time_seconds', 'Unix time of last boot')
 ZPOOL_SIZE = Gauge('homelab_zpool_size_bytes', 'Pool raw size', ['pool'])
 ZPOOL_ALLOCATED = Gauge('homelab_zpool_allocated_bytes', 'Pool raw space allocated', ['pool'])
@@ -105,12 +105,28 @@ def cpu_metrics():
   for period, value in zip(['1m', '5m', '15m'], psutil.getloadavg()):
     LOAD_AVERAGE.labels(period).set(value)
 
+def sysfs_read(path:str) -> str | None:
+  try:
+    with open(path) as handle:
+      return handle.read().strip()
+  except OSError:
+    return None
+
+# psutil groups hwmon chips by their name, so two chips sharing one name (a
+# second NVMe drive) overwrite each other; sysfs keeps them apart
 def temperature_metrics():
-  # Linux only, psutil does not expose sensors elsewhere
-  sensors = getattr(psutil, 'sensors_temperatures', dict)()
-  for name, entries in sensors.items():
-    for entry in entries:
-      TEMPERATURE.labels(entry.label or name).set(entry.current)
+  for chip_path in sorted(glob.glob('/sys/class/hwmon/hwmon*')):
+    name = sysfs_read(f'{chip_path}/name')
+    if name is None:
+      continue
+    device = f'{chip_path}/device'
+    chip = os.path.basename(os.path.realpath(device)) if os.path.exists(device) else name
+    for input_path in sorted(glob.glob(f'{chip_path}/temp*_input')):
+      reading = sysfs_read(input_path)
+      if reading is None:
+        continue
+      sensor = sysfs_read(input_path.removesuffix('_input') + '_label')
+      TEMPERATURE.labels(chip, sensor or name).set(int(reading) / 1000)
 
 # Pool capacity is raw, matching zpool list, so it does not equal the usable
 # space that statvfs reports for the datasets
