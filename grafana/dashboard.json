@@ -610,14 +610,37 @@
           "expr": "max by (chip, sensor) (homelab_temperature_celsius{chip!~\"nvme.*\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "legendFormat": "{{chip}} {{sensor}}",
+          "legendFormat": "{{sensor}}",
           "range": true,
           "refId": "A",
           "useBackend": false
         }
       ],
       "title": "CPU & Board Temperature",
-      "type": "timeseries"
+      "type": "timeseries",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^Core (\\d+)$",
+            "renamePattern": "CPU Core $1"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^Package id 0$",
+            "renamePattern": "CPU Package"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^acpitz$",
+            "renamePattern": "Motherboard"
+          }
+        }
+      ]
     },
     {
       "collapsed": false,
