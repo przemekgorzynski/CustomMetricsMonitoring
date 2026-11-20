@@ -607,10 +607,10 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "max by (sensor) (homelab_temperature_celsius)",
+          "expr": "max by (chip, sensor) (homelab_temperature_celsius)",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "legendFormat": "{{sensor}}",
+          "legendFormat": "{{chip}} {{sensor}}",
           "range": true,
           "refId": "A",
           "useBackend": false
