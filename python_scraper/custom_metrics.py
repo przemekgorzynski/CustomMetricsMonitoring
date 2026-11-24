@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from prometheus_client import start_http_server, Gauge, Counter
-import time, os, glob, subprocess, logging, psutil
+import time, os, glob, json, re, subprocess, logging, psutil
+from datetime import datetime
 from ping3 import ping
 
 # Logging definition
@@ -18,6 +19,11 @@ DISK_INODES = Gauge('homelab_disk_inodes', 'Inodes on the filesystem', ['device'
 DISK_INODES_USED = Gauge('homelab_disk_inodes_used', 'Inodes used', ['device'])
 DISK_READ = Gauge('homelab_disk_read_bytes_total', 'Bytes read since boot', ['device'])
 DISK_WRITE = Gauge('homelab_disk_write_bytes_total', 'Bytes written since boot', ['device'])
+DISK_READS = Gauge('homelab_disk_reads_total', 'Read operations completed since boot', ['device'])
+DISK_WRITES = Gauge('homelab_disk_writes_total', 'Write operations completed since boot', ['device'])
+DISK_READ_TIME = Gauge('homelab_disk_read_time_seconds_total', 'Time spent serving reads since boot', ['device'])
+DISK_WRITE_TIME = Gauge('homelab_disk_write_time_seconds_total', 'Time spent serving writes since boot', ['device'])
+DISK_IO_TIME = Gauge('homelab_disk_io_time_seconds_total', 'Time with at least one request in flight since boot', ['device'])
 NET_RECV = Gauge('homelab_network_receive_bytes_total', 'Bytes received since boot', ['device'])
 NET_SENT = Gauge('homelab_network_transmit_bytes_total', 'Bytes sent since boot', ['device'])
 NET_ERRORS = Gauge('homelab_network_errors_total', 'Network errors since boot', ['device', 'direction'])
@@ -34,6 +40,13 @@ ZPOOL_FREE = Gauge('homelab_zpool_free_bytes', 'Pool raw space free', ['pool'])
 ZPOOL_CAPACITY = Gauge('homelab_zpool_capacity_percent', 'Pool space used', ['pool'])
 ZPOOL_FRAGMENTATION = Gauge('homelab_zpool_fragmentation_percent', 'Pool free space fragmentation', ['pool'])
 ZPOOL_ONLINE = Gauge('homelab_zpool_online', 'Pool health is ONLINE', ['pool', 'health'])
+ZPOOL_SCRUB_LAST_START = Gauge('homelab_zpool_scrub_last_start_seconds', 'Unix time the last scrub started', ['pool'])
+ZPOOL_SCRUB_ERRORS = Gauge('homelab_zpool_scrub_errors', 'Errors found by the last finished scrub', ['pool'])
+ZPOOL_SCRUB_RUNNING = Gauge('homelab_zpool_scrub_running', 'A scrub is currently running', ['pool'])
+ZPOOL_VDEV_ONLINE = Gauge('homelab_zpool_vdev_online', 'Vdev state is ONLINE', ['pool', 'vdev', 'type', 'state'])
+ZPOOL_VDEV_ERRORS = Gauge('homelab_zpool_vdev_errors', 'Errors on a vdev since the counters were last cleared', ['pool', 'vdev', 'type', 'error'])
+ZPOOL_VDEV_CHILDREN = Gauge('homelab_zpool_vdev_children', 'Devices making up a redundant vdev', ['pool', 'vdev', 'type'])
+ZPOOL_VDEV_CHILDREN_ONLINE = Gauge('homelab_zpool_vdev_children_online', 'Devices of a redundant vdev that are ONLINE', ['pool', 'vdev', 'type'])
 SCRAPE_ERRORS = Counter('homelab_scrape_errors_total', 'Failed collections', ['collector'])
 
 # Ping Targets
@@ -81,6 +94,14 @@ def disk_io_metrics():
       continue
     DISK_READ.labels(device).set(io.read_bytes)
     DISK_WRITE.labels(device).set(io.write_bytes)
+    DISK_READS.labels(device).set(io.read_count)
+    DISK_WRITES.labels(device).set(io.write_count)
+    # Latency needs time and operation count as separate counters so that
+    # Prometheus divides their rates; a ratio averaged here would be since boot.
+    # psutil reports these in milliseconds, busy_time only on Linux
+    DISK_READ_TIME.labels(device).set(io.read_time / 1000)
+    DISK_WRITE_TIME.labels(device).set(io.write_time / 1000)
+    DISK_IO_TIME.labels(device).set(getattr(io, 'busy_time', 0) / 1000)
 
 # Physical interfaces link to their device in sysfs, veth and bridges do not
 def physical_nic(device:str) -> bool:
@@ -146,6 +167,58 @@ def zpool_metrics():
     ZPOOL_FRAGMENTATION.labels(pool).set(int(frag) if frag.isdigit() else float('nan'))
     ZPOOL_ONLINE.labels(pool, health).set(1 if health == 'ONLINE' else 0)
 
+# zpool status reports only the most recent scan, so a resilver hides when the
+# pool was last scrubbed; zpool history keeps every scrub and timestamps it
+# without locale-formatted dates, which the status output uses
+SCRUB_STARTED = re.compile(r'^(\d{4}-\d{2}-\d{2}\.\d{2}:\d{2}:\d{2}) zpool scrub (\S+)$')
+
+def last_scrub_start(pool:str) -> float:
+  output = subprocess.run(['zpool', 'history', pool], capture_output=True, text=True)
+  if output.returncode:
+    raise RuntimeError(output.stderr.strip() or f'zpool exited {output.returncode}')
+  starts = []
+  for line in output.stdout.splitlines():
+    found = SCRUB_STARTED.match(line.strip())
+    if found and found.group(2) == pool:
+      starts.append(found.group(1))
+  if not starts:
+    return float('nan')
+  # History is written in the host's local time; a container on a different
+  # offset is hours out, which is noise against a threshold set in weeks
+  return datetime.strptime(starts[-1], '%Y-%m-%d.%H:%M:%S').timestamp()
+
+# A mirror only protects anything while every leg is ONLINE, and the counters
+# below rise long before ZFS downgrades the pool, so they are the early warning
+def vdev_metrics(pool:str, vdevs:dict):
+  for name, vdev in (vdevs or {}).items():
+    kind = vdev.get('vdev_type', '')
+    children = vdev.get('vdevs') or {}
+    if kind != 'root':
+      ZPOOL_VDEV_ONLINE.labels(pool, name, kind, vdev.get('state', '')).set(1 if vdev.get('state') == 'ONLINE' else 0)
+      for error in ('read', 'write', 'checksum'):
+        ZPOOL_VDEV_ERRORS.labels(pool, name, kind, error).set(int(vdev.get(f'{error}_errors', 0)))
+      if children:
+        ZPOOL_VDEV_CHILDREN.labels(pool, name, kind).set(len(children))
+        ZPOOL_VDEV_CHILDREN_ONLINE.labels(pool, name, kind).set(
+          sum(1 for leg in children.values() if leg.get('state') == 'ONLINE')
+        )
+    vdev_metrics(pool, children)
+
+def zpool_status_metrics():
+  if not os.path.exists('/dev/zfs'):
+    return
+  output = subprocess.run(['zpool', 'status', '-j'], capture_output=True, text=True)
+  if output.returncode:
+    raise RuntimeError(output.stderr.strip() or f'zpool exited {output.returncode}')
+  for pool, state in json.loads(output.stdout).get('pools', {}).items():
+    scan = state.get('scan_stats') or {}
+    scrubbing = scan.get('function') == 'SCRUB'
+    ZPOOL_SCRUB_RUNNING.labels(pool).set(1 if scrubbing and scan.get('state') == 'SCANNING' else 0)
+    finished = scrubbing and scan.get('state') == 'FINISHED'
+    ZPOOL_SCRUB_ERRORS.labels(pool).set(int(scan['errors']) if finished else float('nan'))
+    ZPOOL_SCRUB_LAST_START.labels(pool).set(last_scrub_start(pool))
+    vdev_metrics(pool, state.get('vdevs'))
+
 def uptime_metrics():
   BOOT_TIME.set(psutil.boot_time())
 
@@ -158,6 +231,7 @@ collectors = {
   'cpu': cpu_metrics,
   'temperature': temperature_metrics,
   'zpool': zpool_metrics,
+  'zpool_status': zpool_status_metrics,
   'uptime': uptime_metrics,
 }
 
